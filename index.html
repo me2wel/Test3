@@ -399,7 +399,7 @@
       transform: scale(1.1);
     }
     
-    /* Fullscreen video fix */
+    /* Fullscreen video fix - Desktop */
     .video-container:fullscreen video {
       width: 1920px !important;
       height: 1080px !important;
@@ -440,7 +440,7 @@
       transform: translate(-50%, -50%) !important;
     }
     
-    /* Fullscreen container styling */
+    /* Fullscreen container styling - Desktop */
     .video-container:fullscreen,
     .video-container:-webkit-full-screen,
     .video-container:-moz-full-screen,
@@ -713,6 +713,51 @@
       .video-controls {
         opacity: 1; /* Always show controls on mobile */
       }
+      
+      /* Mobile Fullscreen Styles */
+      .video-container:fullscreen,
+      .video-container:-webkit-full-screen,
+      .video-container:-moz-full-screen,
+      .video-container:-ms-fullscreen {
+        background: black;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+      }
+      
+      .video-container:fullscreen video,
+      .video-container:-webkit-full-screen video,
+      .video-container:-moz-full-screen video,
+      .video-container:-ms-fullscreen video {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        position: static;
+        transform: none;
+      }
+      
+      /* Larger controls for mobile */
+      .play-btn, .fullscreen-btn {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .play-btn i, .fullscreen-btn i {
+        font-size: 20px;
+      }
+      
+      .progress-container {
+        height: 8px;
+      }
+      
+      .time-display {
+        font-size: 16px;
+      }
     }
     
     @media (max-width: 480px) {
@@ -745,8 +790,12 @@
       }
       
       .play-btn, .fullscreen-btn {
-        width: 35px;
-        height: 35px;
+        width: 45px;
+        height: 45px;
+      }
+      
+      .play-btn i, .fullscreen-btn i {
+        font-size: 18px;
       }
     }
   </style>
@@ -758,6 +807,7 @@
     <p>Downloading videos from this website is prohibited. All content is protected by copyright laws.</p>
     <button onclick="hideWarning()">I Understand</button>
   </div>
+
   <!-- Navigation -->
   <nav>
     <div class="nav-container">
@@ -773,12 +823,14 @@
       </ul>
     </div>
   </nav>
+
   <!-- Home Section -->
   <section id="home">
     <h1 class="welcome-text">Welcome to Alok Video Editor</h1>
     <p class="description">From Mahottari, Bardibas Nepal. Professional video editing services that bring your vision to life with precision, creativity, and impact.</p>
     <a href="#portfolio" class="btn">View My Work</a>
   </section>
+
   <!-- About Section -->
   <section id="about">
     <div class="about-image">
@@ -790,6 +842,7 @@
       <p>I believe that great editing is invisible. It's about rhythm, pace, and emotion, ensuring that the final product not only looks stunning but also resonates with its intended audience.</p>
     </div>
   </section>
+
   <!-- Portfolio Section -->
   <section id="portfolio">
     <h2 class="section-title">My Portfolio</h2>
@@ -797,6 +850,7 @@
       <!-- Videos will be dynamically added here -->
     </div>
   </section>
+
   <!-- Plugin Section -->
   <section id="plugin">
     <h2 class="section-title">DaVinci Resolve Plugin</h2>
@@ -808,6 +862,7 @@
       </a>
     </div>
   </section>
+
   <!-- Services Section -->
   <section id="services">
     <h2 class="section-title">Services & Skills</h2>
@@ -815,6 +870,7 @@
       <!-- Services will be dynamically added here -->
     </div>
   </section>
+
   <!-- Footer -->
   <footer>
     <div class="footer-content">
@@ -825,6 +881,7 @@
       </div>
     </div>
   </footer>
+
   <script>
     // Video portfolio data - add new videos here in the future
     const portfolioVideos = [
@@ -1204,9 +1261,10 @@
       timeDisplay.textContent = `${currentMinutes}:${currentSeconds} / ${durationMinutes}:${durationSeconds}`;
     }
     
-    // Fullscreen functionality
+    // Fullscreen functionality with auto-rotation detection
     function toggleFullscreen(containerId) {
       const container = document.getElementById(containerId);
+      const video = container.querySelector('video');
       const fullscreenIcon = document.getElementById('fullscreen-icon' + containerId.slice(-1));
       
       if (!document.fullscreenElement && 
@@ -1215,13 +1273,21 @@
           !document.msFullscreenElement) {
         // Enter fullscreen
         if (container.requestFullscreen) {
-          container.requestFullscreen();
+          container.requestFullscreen().then(() => {
+            handleFullscreenOrientation(video);
+          });
         } else if (container.mozRequestFullScreen) {
-          container.mozRequestFullScreen();
+          container.mozRequestFullScreen().then(() => {
+            handleFullscreenOrientation(video);
+          });
         } else if (container.webkitRequestFullscreen) {
-          container.webkitRequestFullscreen();
+          container.webkitRequestFullscreen().then(() => {
+            handleFullscreenOrientation(video);
+          });
         } else if (container.msRequestFullscreen) {
-          container.msRequestFullscreen();
+          container.msRequestFullscreen().then(() => {
+            handleFullscreenOrientation(video);
+          });
         }
         fullscreenIcon.classList.remove('fa-expand');
         fullscreenIcon.classList.add('fa-compress');
@@ -1238,6 +1304,37 @@
         }
         fullscreenIcon.classList.remove('fa-compress');
         fullscreenIcon.classList.add('fa-expand');
+      }
+    }
+    
+    // Handle video orientation in fullscreen
+    function handleFullscreenOrientation(video) {
+      // Only attempt to rotate on mobile devices
+      if (window.innerWidth <= 768) {
+        // Check video dimensions
+        video.addEventListener('loadedmetadata', function() {
+          const videoWidth = video.videoWidth;
+          const videoHeight = video.videoHeight;
+          
+          // If video is landscape (1920x1080), attempt to rotate screen
+          if (videoWidth > videoHeight && videoWidth >= 1920 && videoHeight >= 1080) {
+            // Try to lock orientation to landscape
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('landscape').catch(err => {
+                console.log('Orientation lock failed:', err);
+              });
+            }
+          }
+          // If video is portrait (1080x1920), don't rotate
+          else if (videoHeight > videoWidth && videoHeight >= 1920 && videoWidth >= 1080) {
+            // Try to lock orientation to portrait
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('portrait').catch(err => {
+                console.log('Orientation lock failed:', err);
+              });
+            }
+          }
+        });
       }
     }
     
@@ -1278,37 +1375,6 @@
           playIcon.classList.remove('fa-pause');
           playIcon.classList.add('fa-play');
         });
-        
-        // Prevent video download
-        // Replace the initializeVideoPlayers function with this corrected version
-function initializeVideoPlayers() {
-  document.querySelectorAll('video').forEach(video => {
-    const videoId = video.id;
-    
-    video.addEventListener('timeupdate', () => updateProgress(videoId));
-    video.addEventListener('loadedmetadata', () => updateProgress(videoId));
-    video.addEventListener('ended', () => {
-      const playIcon = document.getElementById('play-icon' + videoId.slice(-1));
-      playIcon.classList.remove('fa-pause');
-      playIcon.classList.add('fa-play');
-    });
-    
-    // Remove the problematic progress event listener
-    // The following code has been removed as it was causing playback issues:
-    /*
-    video.addEventListener('progress', () => {
-      if (video.buffered.length > 0) {
-        // Only buffer a small portion to prevent full download
-        const bufferEnd = video.buffered.end(video.buffered.length - 1);
-        if (bufferEnd > video.duration * 0.3) {
-          video.pause();
-          video.currentTime = 0;
-        }
-      }
-    });
-    */
-  });
-}
       });
     }
     
@@ -1319,5 +1385,4 @@ function initializeVideoPlayers() {
     });
   </script>
 </body>
-
 </html>
