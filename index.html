@@ -1280,16 +1280,35 @@
         });
         
         // Prevent video download
-        video.addEventListener('progress', () => {
-          if (video.buffered.length > 0) {
-            // Only buffer a small portion to prevent full download
-            const bufferEnd = video.buffered.end(video.buffered.length - 1);
-            if (bufferEnd > video.duration * 0.3) {
-              video.pause();
-              video.currentTime = 0;
-            }
-          }
-        });
+        // Replace the initializeVideoPlayers function with this corrected version
+function initializeVideoPlayers() {
+  document.querySelectorAll('video').forEach(video => {
+    const videoId = video.id;
+    
+    video.addEventListener('timeupdate', () => updateProgress(videoId));
+    video.addEventListener('loadedmetadata', () => updateProgress(videoId));
+    video.addEventListener('ended', () => {
+      const playIcon = document.getElementById('play-icon' + videoId.slice(-1));
+      playIcon.classList.remove('fa-pause');
+      playIcon.classList.add('fa-play');
+    });
+    
+    // Remove the problematic progress event listener
+    // The following code has been removed as it was causing playback issues:
+    /*
+    video.addEventListener('progress', () => {
+      if (video.buffered.length > 0) {
+        // Only buffer a small portion to prevent full download
+        const bufferEnd = video.buffered.end(video.buffered.length - 1);
+        if (bufferEnd > video.duration * 0.3) {
+          video.pause();
+          video.currentTime = 0;
+        }
+      }
+    });
+    */
+  });
+}
       });
     }
     
@@ -1300,4 +1319,5 @@
     });
   </script>
 </body>
+
 </html>
